@@ -11,13 +11,35 @@ export const OnlineOverrideForm: React.FC = () => {
     status: 'IDLE',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setForm((prev) => ({ ...prev, isSubmitting: true }));
 
-    setTimeout(() => {
-      setForm((prev) => ({ ...prev, isSubmitting: false, status: 'SUCCESS' }));
-    }, 1000);
+    try {
+      const response = await fetch('http://localhost:8000/api/override', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseCode: form.courseCode,
+          reason: form.justification,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setForm((prev) => ({ ...prev, isSubmitting: false, status: 'SUCCESS' }));
+      } else {
+        alert(`Error: ${data.detail || 'Failed to submit override'}`);
+        setForm((prev) => ({ ...prev, isSubmitting: false }));
+      }
+    } catch (error) {
+      console.error('Failed to connect to backend:', error);
+      alert('Could not connect to the SmartAdvisor server.');
+      setForm((prev) => ({ ...prev, isSubmitting: false }));
+    }
   };
 
   if (form.status === 'SUCCESS') {
